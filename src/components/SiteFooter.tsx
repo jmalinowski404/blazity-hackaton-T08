@@ -8,7 +8,6 @@ export function SiteFooter() {
           <BrandMark />
           Tono
         </div>
-        <span className="mono">in tune since 2026 — placeholder, inc.</span>
         <span>© Placeholder content for design review</span>
       </div>
     </footer>

@@ -7,7 +7,7 @@ export function VoiceProfile() {
         <div>
           <span className="eyebrow">The voice profile</span>
           <h2>
-            These are the rules Tono <em>checks against</em>.
+            These are the rules Tono <span className="text-decoration">checks against</span>.
           </h2>
         </div>
         <p>
@@ -15,6 +15,18 @@ export function VoiceProfile() {
           traces back to one of these rules, so nothing the checker flags is a mystery.
         </p>
       </div>
+        <ul className="legend">
+        <li className="legend-item">
+          <span className="legend-dot sev-high" /> <span className="legend-item-title">High</span>  &mdash; clearly breaks the voice
+        </li>
+        <li className="legend-item">
+          <span className="legend-dot sev-medium" /> <span className="legend-item-title">Medium</span>  &mdash; noticeably off
+        </li>
+        <li className="legend-item">
+          <span className="legend-dot sev-low" /> <span className="legend-item-title">Low</span>  &mdash; minor polish
+        </li>
+        </ul>
+
       <div className="voice-grid">
         {BRAND_PROFILE.rules.map((r) => (
           <div className="vcard" key={r.code}>
@@ -35,17 +47,6 @@ export function VoiceProfile() {
             </div>
           </div>
         ))}
-      </div>
-      <div className="legend">
-        <span className="legend-item">
-          <span className="legend-dot sev-high" /> high &mdash; clearly breaks the voice
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot sev-medium" /> medium &mdash; noticeably off
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot sev-low" /> low &mdash; minor polish
-        </span>
       </div>
     </section>
   );
