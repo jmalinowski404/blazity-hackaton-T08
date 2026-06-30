@@ -677,6 +677,169 @@ body {
 }
 .foot-in .brand { font-size: 15px; }
 
+/* ---- source bar (URL fetch) in edit mode ---- */
+.edit-pane { display: flex; flex-direction: column; }
+.source-bar {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+.url-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  outline: none;
+}
+.url-input::placeholder { color: var(--haze); }
+.url-input:focus-visible { border-color: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); }
+.url-fetch { flex: none; }
+.url-fetch.btn-ghost {
+  color: var(--ink);
+  border-color: var(--paper-edge);
+}
+.url-fetch.btn-ghost:hover { border-color: var(--haze); }
+.source-hint {
+  font-size: 12px;
+  color: var(--haze);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.source-hint .hint-err { color: #b5462b; }
+.spinner.dark {
+  border-color: rgba(26, 27, 46, 0.25);
+  border-top-color: var(--ink);
+}
+
+/* ---- findings: explanations, severity, apply, actions ---- */
+.notes-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.note-sev {
+  margin-left: auto;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.sev-text-low { color: var(--gold); }
+.sev-text-medium { color: var(--drift); }
+.sev-text-high { color: #f08a73; border-color: rgba(226, 80, 58, 0.4); }
+.note-explain {
+  font-size: 13px;
+  color: var(--mist-dim);
+  line-height: 1.5;
+  margin: 0 0 11px;
+}
+.applied-tag {
+  font-family: var(--font-sans), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #9fe7da;
+}
+.note.is-applied {
+  opacity: 0.62;
+  border-color: var(--aligned-soft);
+}
+.note.is-applied .note-rewrite { color: var(--mist-dim); }
+.note-marker.sev-low,
+.note-marker.sev-medium,
+.note-marker.sev-high {}
+.note.is-applied .note-marker {
+  background: var(--aligned);
+  color: #06251f;
+}
+.restale {
+  font-size: 12px;
+  color: var(--gold);
+  margin: -4px 0 14px;
+}
+.mini:disabled { opacity: 0.5; cursor: default; }
+
+/* ---- how it works ---- */
+.how { padding-top: 88px; }
+.how .eyebrow { display: block; margin-bottom: 26px; }
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.steps li {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px 20px 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+}
+.step-n {
+  font-family: var(--font-display), serif;
+  font-size: 30px;
+  color: var(--signal);
+  line-height: 1;
+}
+.steps h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--mist);
+  margin: 12px 0 8px;
+}
+.steps p {
+  font-size: 14px;
+  color: var(--mist-dim);
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* ---- severity legend under the voice profile ---- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--mist-dim);
+}
+.legend-item { display: inline-flex; align-items: center; gap: 8px; }
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.legend-dot.sev-high { background: #e2503a; }
+.legend-dot.sev-medium { background: var(--drift); }
+.legend-dot.sev-low { background: var(--gold); }
+
+/* ---- toast ---- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  background: var(--night-2);
+  border: 1px solid var(--line-strong);
+  color: var(--mist);
+  font-size: 13px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.9);
+  z-index: 80;
+  animation: rise 0.3s ease both;
+}
+
 /* ============================================================
    Animations
    ============================================================ */
@@ -702,12 +865,15 @@ body {
   .panel-body { grid-template-columns: 1fr; }
   .notes { border-left: none; border-top: 1px solid var(--line); }
   .voice-grid { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
   .topnav { display: none; }
 }
 @media (max-width: 560px) {
   .shell { padding-inline: 18px; }
   .meter { min-width: 0; width: 100%; }
   .status { display: none; }
+  .source-bar { flex-direction: column; }
+  .url-fetch { width: 100%; }
 }
 
 /* ============================================================

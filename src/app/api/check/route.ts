@@ -1,29 +1,8 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { buildSystemPrompt } from "@/app/brand";
 
-/* The house voice Tono enforces. This is the "custom prompt with brand
-   guidelines" the check runs against. Edit this block to retune the brand. */
-const SYSTEM = `You are the brand-voice editor for a company whose house voice is defined below.
-You review submitted copy and report every place it drifts off-brand.
-
-# House voice — the brand guidelines you enforce
-- Tone: warm, plain-spoken, and confident. Sound like a knowledgeable person, not a press release. No hype, no hard sell.
-- Vocabulary: plain verbs over corporate ones. Avoid jargon and buzzwords such as "leverage", "synergy", "utilize", "best-in-class", "empower", "ideate", "stakeholder", "revolutionary", "cutting-edge", "seamless", "game-changing".
-- Claims: be specific and concrete. No vague superlatives ("the best", "world-class") and no unverifiable hype.
-- Mechanics: sentence case for headings and buttons (not Title Case). One terminal punctuation mark — never "!!!". Use contractions. Prefer short sentences.
-- Audience: people doing real content work who value clarity over polish.
-
-# Your task
-Given the user's copy, call the report_brand_check tool. For each off-brand passage provide:
-- quote: the EXACT, VERBATIM substring copied from the text, character-for-character, so it can be located and highlighted. Keep it short — just the offending phrase.
-- rule: a short rule code you assign, e.g. HYPE-02, JARGON-01, CASE-03, WORD-07, VOICE-01.
-- title: a 2-4 word label for the issue.
-- severity: low, medium, or high.
-- rewrite: an on-brand replacement for just that passage.
-Also provide:
-- score: an integer 0-100 for how well the whole text fits the house voice (100 = perfectly on-brand).
-- summary: one short sentence on the overall fit.
-Report findings in the order they appear in the text. If the copy is already on-brand, return an empty findings array and a high score.`;
+const SYSTEM = buildSystemPrompt();
 
 const INPUT_SCHEMA: Anthropic.Tool.InputSchema = {
   type: "object",
@@ -45,12 +24,16 @@ const INPUT_SCHEMA: Anthropic.Tool.InputSchema = {
             type: "string",
             description: "Exact verbatim substring copied from the submitted text.",
           },
-          rule: { type: "string", description: "Short rule code, e.g. HYPE-02." },
+          rule: { type: "string", description: "Rule code it breaks, e.g. VOCABULARY-01." },
           title: { type: "string", description: "2-4 word label for the issue." },
           severity: { type: "string", enum: ["low", "medium", "high"] },
+          explanation: {
+            type: "string",
+            description: "One plain sentence a non-expert understands: what's off-brand and why it matters.",
+          },
           rewrite: { type: "string", description: "On-brand replacement for the quoted passage." },
         },
-        required: ["quote", "rule", "title", "severity", "rewrite"],
+        required: ["quote", "rule", "title", "severity", "explanation", "rewrite"],
       },
     },
   },
