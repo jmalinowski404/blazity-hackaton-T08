@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { annotate, correctedName } from "@/lib/annotate";
+import { annotate } from "@/lib/annotate";
 import type { CheckResult } from "@/lib/types";
 
 const SAMPLE = `We're thrilled to announce a revolutionary new platform that will utilize cutting-edge AI to leverage synergies across your entire content stack. Our best-in-class solution empowers stakeholders to ideate at scale. Click Here To Learn More!!!`;
@@ -21,9 +21,9 @@ export function useBrandCheck() {
     [text, result, applied],
   );
 
-  function flash(msg: string) {
+  function flash(msg: string, ms = 2400) {
     setToast(msg);
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2400);
+    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), ms);
   }
 
   function loadText(next: string, name: string) {
@@ -82,17 +82,31 @@ export function useBrandCheck() {
     setApplied(all);
   }
 
-  function download() {
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const href = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = href;
-    a.download = correctedName(fileName);
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(href);
-    flash("Downloaded corrected file");
+  async function exportAs(format: string) {
+    try {
+      const res = await fetch("/api/export", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, format, name: fileName }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d?.error ?? "Export failed.");
+      }
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const base = fileName.replace(/\.[^.]+$/, "") || "corrected";
+      a.href = href;
+      a.download = `${base}-corrected.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+      flash(`Downloaded .${format}`);
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Export failed");
+    }
   }
 
   async function copyText() {
@@ -124,7 +138,7 @@ export function useBrandCheck() {
     runCheck,
     applyFinding,
     applyAll,
-    download,
+    exportAs,
     copyText,
   };
 }

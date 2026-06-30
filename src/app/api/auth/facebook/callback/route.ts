@@ -1,39 +1,59 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { exchangeCode, getLongLivedToken, MetaError, STATE_COOKIE, TOKEN_COOKIE } from "@/lib/meta";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  exchangeCode,
+  getLongLivedToken,
+  MetaError,
+  originFromRequest,
+  STATE_COOKIE,
+  TOKEN_COOKIE,
+} from "@/lib/meta";
 
-export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const origin = url.origin;
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-  const err = url.searchParams.get("error");
+export async function GET(req: NextRequest) {
+  const origin = originFromRequest(req);
+  const code = req.nextUrl.searchParams.get("code");
+  const state = req.nextUrl.searchParams.get("state");
+  const err = req.nextUrl.searchParams.get("error");
+  const errDesc = req.nextUrl.searchParams.get("error_description");
 
-  const jar = await cookies();
-  const expectedState = jar.get(STATE_COOKIE)?.value;
-  jar.delete(STATE_COOKIE);
+  const expectedState = req.cookies.get(STATE_COOKIE)?.value;
 
-  if (err) {
-    // user denied or Meta returned an error
-    return NextResponse.redirect(`${origin}/?social=denied`);
-  }
-  if (!code || !state || state !== expectedState) {
-    return NextResponse.redirect(`${origin}/?social=bad_state`);
+  const fail = (social: string, reason?: string) => {
+    const url = new URL(`${origin}/`);
+    url.searchParams.set("social", social);
+    if (reason) url.searchParams.set("reason", reason);
+    const res = NextResponse.redirect(url);
+    res.cookies.delete(STATE_COOKIE);
+    return res;
+  };
+
+  if (err) return fail("denied", errDesc ?? err);
+  if (!code) return fail("error", "No authorization code was returned.");
+  if (!state || state !== expectedState) {
+    return fail(
+      "bad_state",
+      "Session check failed (the state cookie didn't survive the redirect).",
+    );
   }
 
   try {
     const shortToken = await exchangeCode(origin, code);
     const longToken = await getLongLivedToken(shortToken).catch(() => shortToken);
-    jar.set(TOKEN_COOKIE, longToken, {
+
+    const url = new URL(`${origin}/`);
+    url.searchParams.set("social", "connected");
+    url.hash = "proof";
+    const res = NextResponse.redirect(url);
+    res.cookies.delete(STATE_COOKIE);
+    res.cookies.set(TOKEN_COOKIE, longToken, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 24 * 60 * 60, // ~60 days
     });
-    return NextResponse.redirect(`${origin}/?social=connected#proof`);
+    return res;
   } catch (e) {
-    const msg = e instanceof MetaError ? e.message : "auth_failed";
-    return NextResponse.redirect(`${origin}/?social=error&reason=${encodeURIComponent(msg)}`);
+    const reason = e instanceof MetaError ? e.message : "Token exchange failed.";
+    return fail("error", reason);
   }
 }

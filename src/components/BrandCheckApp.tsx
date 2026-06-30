@@ -27,23 +27,27 @@ export function BrandCheckApp() {
   const [url, setUrl] = useState("");
   const [fetchBusy, setFetchBusy] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [uploadBusy, setUploadBusy] = useState(false);
   const [selected, setSelected] = useState<Selected | null>(null);
   const [repostBusy, setRepostBusy] = useState(false);
   const [repostDone, setRepostDone] = useState(false);
 
   useEffect(() => {
     void social.refreshStatus();
-    const s = new URLSearchParams(window.location.search).get("social");
+    const params = new URLSearchParams(window.location.search);
+    const s = params.get("social");
+    const reason = params.get("reason");
     if (s) {
-      const msg =
-        s === "connected"
-          ? "Connected"
-          : s === "denied"
-            ? "Connection cancelled"
-            : s === "not_configured"
-              ? "Add Meta credentials in .env.local to connect"
-              : "Connection failed";
-      bc.flash(msg);
+      if (s === "connected") {
+        bc.flash("Connected");
+      } else if (s === "not_configured") {
+        bc.flash("Add Meta credentials to connect", 7000);
+      } else if (s === "denied") {
+        bc.flash(`Connection cancelled${reason ? `: ${reason}` : ""}`, 7000);
+      } else {
+        // bad_state / error
+        bc.flash(`Connection failed — ${reason ?? "see server logs"}`, 9000);
+      }
       window.history.replaceState({}, "", window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,15 +74,24 @@ export function BrandCheckApp() {
     }
   }
 
-  function onUpload(e: ChangeEvent<HTMLInputElement>) {
+  async function onUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) {
-      file.text().then((t) => {
-        bc.loadText(t, file.name);
-        setSelected(null);
-      });
-    }
     e.target.value = "";
+    if (!file) return;
+    setUploadBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/extract", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Couldn't read that file.");
+      bc.loadText(data.text as string, (data.name as string) || file.name);
+      setSelected(null);
+    } catch (err) {
+      bc.flash(err instanceof Error ? err.message : "Couldn't read that file");
+    } finally {
+      setUploadBusy(false);
+    }
   }
 
   function pickPost(post: SocialPost) {
@@ -146,13 +159,24 @@ export function BrandCheckApp() {
             <VoiceMeter score={score} runId={bc.runId} />
 
             <div className="head-actions">
-              <label className="btn btn-ghost" title="Upload a .txt or .md file">
-                Upload
+              <label
+                className="btn btn-ghost"
+                title="Upload .txt, .md, .csv, .json, .html, .docx, or .pdf"
+              >
+                {uploadBusy ? (
+                  <span className="loading">
+                    <span className="spinner" aria-hidden />
+                    Reading…
+                  </span>
+                ) : (
+                  "Upload"
+                )}
                 <input
                   type="file"
-                  accept=".txt,.md,text/plain,text/markdown"
+                  accept=".txt,.md,.markdown,.csv,.json,.log,.html,.htm,.rtf,.docx,.pdf,text/*,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={onUpload}
                   hidden
+                  disabled={uploadBusy}
                 />
               </label>
               {bc.mode === "result" ? (
@@ -210,7 +234,7 @@ export function BrandCheckApp() {
               onActive={bc.setActive}
               onApply={bc.applyFinding}
               onApplyAll={bc.applyAll}
-              onDownload={bc.download}
+              onExport={bc.exportAs}
               onCopy={bc.copyText}
               repost={repost}
             />

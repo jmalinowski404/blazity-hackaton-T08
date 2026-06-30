@@ -1,5 +1,6 @@
 import type { CheckResult } from "@/lib/types";
 import { FindingCard } from "@/components/FindingCard";
+import { DownloadMenu } from "@/components/DownloadMenu";
 
 export type RepostCtx = {
   canEdit: boolean;
@@ -21,7 +22,7 @@ type Props = {
   onActive: (idx: number | null) => void;
   onApply: (idx: number) => void;
   onApplyAll: () => void;
-  onDownload: () => void;
+  onExport: (format: string) => void;
   onCopy: () => void;
   repost: RepostCtx;
 };
@@ -37,7 +38,7 @@ export function FindingsPanel({
   onActive,
   onApply,
   onApplyAll,
-  onDownload,
+  onExport,
   onCopy,
   repost,
 }: Props) {
@@ -75,9 +76,7 @@ export function FindingsPanel({
             <button className="mini mini-apply" onClick={onApplyAll} disabled={allApplied}>
               {allApplied ? "All fixes applied" : "Apply all fixes"}
             </button>
-            <button className="mini" onClick={onDownload} title="Save the corrected text as a file">
-              Download
-            </button>
+            <DownloadMenu onExport={onExport} />
             <button className="mini" onClick={onCopy} title="Copy the corrected text">
               Copy
             </button>

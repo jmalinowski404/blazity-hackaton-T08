@@ -969,6 +969,44 @@ body {
   padding-right: 0.8em;
 }
 
+/* ---- download format menu ---- */
+.dl { position: relative; }
+.dl > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+}
+.dl > summary::-webkit-details-marker { display: none; }
+.dl > summary::marker { content: ""; }
+.dl-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  min-width: 178px;
+  background: var(--night-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 5px;
+  box-shadow: 0 24px 50px -26px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dl-item {
+  text-align: left;
+  font-family: var(--font-sans), sans-serif;
+  font-size: 13px;
+  color: var(--mist-dim);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.dl-item:hover { background: var(--signal-soft); color: var(--mist); }
+
 /* ============================================================
    Animations
    ============================================================ */

@@ -39,7 +39,19 @@ function creds() {
   return { id, secret };
 }
 
-/** The OAuth redirect URI. Override with META_REDIRECT_URI; otherwise derived. */
+/** Public origin of the request. On Vercel, `new URL(req.url).origin` can be an
+   internal host or wrong protocol, so prefer the forwarded headers. */
+export function originFromRequest(req: Request): string {
+  const h = req.headers;
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  if (host) return `${proto}://${host}`;
+  return new URL(req.url).origin;
+}
+
+/** The OAuth redirect URI. Override with META_REDIRECT_URI; otherwise derived.
+   Set META_REDIRECT_URI on Vercel to a fixed URL so the login dialog and the
+   token exchange always use the identical string (Meta requires an exact match). */
 export function redirectUri(origin: string): string {
   return process.env.META_REDIRECT_URI || `${origin}/api/auth/facebook/callback`;
 }
